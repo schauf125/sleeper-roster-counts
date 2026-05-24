@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sleeper Roster Counts</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f6f7f9;
+      --surface: #ffffff;
+      --surface-strong: #f0f4f3;
+      --ink: #182027;
+      --muted: #63707a;
+      --line: #d9e0e5;
+      --teal: #0f766e;
+      --teal-dark: #0b5c56;
+      --blue: #275f9f;
+      --green: #28764f;
+      --amber: #a35d12;
+      --red: #a3414f;
+      --shadow: 0 16px 40px rgba(24, 32, 39, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px;
+      line-height: 1.45;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .shell {
+      width: min(1360px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-inner {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+      padding: 22px 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.45rem;
+      font-weight: 750;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .league-input {
+      width: min(360px, 70vw);
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .league-input:focus,
+    .filter-input:focus,
+    .select:focus {
+      outline: 3px solid rgba(15, 118, 110, 0.18);
+      border-color: var(--teal);
+    }
+
+    .button {
+      min-height: 40px;
+      border-radius: 8px;
+      padding: 0 14px;
+      color: #fff;
+      background: var(--teal);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .button:hover {
+      background: var(--teal-dark);
+    }
+
+    .button.secondary {
+      color: var(--ink);
+      background: #e8eef1;
+    }
+
+    .button.secondary:hover {
+      background: #dde6ea;
+    }
+
+    .cache-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .cache-toggle input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--teal);
+    }
+
+    main {
+      padding: 24px 0 44px;
+    }
+
+    .status {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--muted);
+      box-shadow: var(--shadow);
+    }
+
+    .status.error {
+      color: var(--red);
+      border-color: rgba(163, 65, 79, 0.35);
+      background: #fff7f8;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #c9d4d8;
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      display: none;
+      flex: 0 0 auto;
+    }
+
+    .status.loading .spinner {
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .league-band {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      margin-top: 22px;
+      padding: 22px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .league-title {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 750;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: var(--surface-strong);
+      color: #31414a;
+      font-size: 0.86rem;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .pill.teal {
+      background: #e2f1ef;
+      color: var(--teal-dark);
+    }
+
+    .pill.amber {
+      background: #fff0dc;
+      color: var(--amber);
+    }
+
+    .pill.blue {
+      background: #e7f0fb;
+      color: var(--blue);
+    }
+
+    .timestamp {
+      color: var(--muted);
+      font-size: 0.88rem;
+      text-align: right;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      min-height: 92px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.83rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.75rem;
+      line-height: 1;
+    }
+
+    .metric.main strong { color: var(--blue); }
+    .metric.ir strong { color: var(--red); }
+    .metric.taxi strong { color: var(--amber); }
+    .metric.good strong { color: var(--green); }
+
+    .section {
+      margin-top: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 750;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-input,
+    .select {
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 10px;
+    }
+
+    .filter-input {
+      width: min(260px, 64vw);
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(62px, auto);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .segment {
+      min-height: 34px;
+      padding: 0 10px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      border-right: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    .segment:last-child {
+      border-right: 0;
+    }
+
+    .segment[aria-pressed="true"] {
+      color: #fff;
+      background: var(--teal);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      color: #40515d;
+      background: #f5f8f9;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    tbody tr:hover {
+      background: #f9fbfb;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .numeric {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .team-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 210px;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #dce8e6;
+      color: var(--teal-dark);
+      display: inline-grid;
+      place-items: center;
+      overflow: hidden;
+      font-size: 0.78rem;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .team-name {
+      font-weight: 750;
+    }
+
+    .user-name {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .section-tag,
+    .eligibility-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 58px;
+      height: 26px;
+      border-radius: 999px;
+      padding: 0 9px;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+
+    .section-tag.main {
+      color: var(--blue);
+      background: #e7f0fb;
+    }
+
+    .section-tag.ir {
+      color: var(--red);
+      background: #fde8ec;
+    }
+
+    .section-tag.taxi {
+      color: var(--amber);
+      background: #fff0dc;
+    }
+
+    .eligibility-tag.yes {
+      color: var(--green);
+      background: #e6f4ed;
+    }
+
+    .eligibility-tag.no {
+      color: var(--red);
+      background: #fde8ec;
+    }
+
+    .eligibility-tag.unknown {
+      color: #5a6269;
+      background: #edf0f2;
+    }
+
+    .player-name {
+      font-weight: 700;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .empty {
+      padding: 34px 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 1050px) {
+      .topbar-inner,
+      .league-band {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      .timestamp {
+        text-align: left;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(3, minmax(140px, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .shell {
+        width: min(100% - 20px, 1360px);
+      }
+
+      .topbar-inner {
+        padding: 16px 0;
+      }
+
+      .toolbar,
+      .league-input,
+      .button,
+      .cache-toggle {
+        width: 100%;
+      }
+
+      .button,
+      .cache-toggle {
+        justify-content: center;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .metric {
+        min-height: 82px;
+      }
+
+      .metric strong {
+        font-size: 1.45rem;
+      }
+
+      .section-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .filters > *,
+      .filter-input,
+      .select {
+        width: 100%;
+      }
+
+      .segmented {
+        grid-auto-columns: 1fr;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <div>
+        <h1>Sleeper Roster Counts</h1>
+        <p class="subtitle">Main roster, IR, taxi, and next-year taxi eligibility.</p>
+      </div>
+      <form class="toolbar" id="league-form">
+        <input class="league-input" id="league-id" name="league-id" autocomplete="off" value="1314091850864279552" aria-label="League ID or Sleeper league URL">
+        <label class="cache-toggle">
+          <input type="checkbox" id="refresh-player-cache">
+          Refresh player cache
+        </label>
+        <button class="button" id="load-button" type="submit">Load League</button>
+        <button class="button secondary" id="export-button" type="button" disabled>Export CSV</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="status" id="status" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span>
+      <span id="status-text">Ready.</span>
+    </div>
+
+    <section class="league-band" id="league-band" hidden>
+      <div>
+        <h2 class="league-title" id="league-title"></h2>
+        <div class="meta-row" id="league-meta"></div>
+      </div>
+      <div class="timestamp" id="loaded-at"></div>
+    </section>
+
+    <section class="metrics" id="metrics" hidden></section>
+
+    <section class="section" id="summary-section" hidden>
+      <div class="section-head">
+        <h2>Roster Summary</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Roster</th>
+              <th>Team</th>
+              <th class="numeric">Total</th>
+              <th class="numeric">Main</th>
+              <th class="numeric">IR</th>
+              <th class="numeric">Taxi</th>
+              <th class="numeric">Taxi Open</th>
+              <th class="numeric">Eligible Next Year</th>
+              <th class="numeric">Current Taxi Not Eligible</th>
+            </tr>
+          </thead>
+          <tbody id="summary-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="players-section" hidden>
+      <div class="section-head">
+        <h2>Player Detail</h2>
+        <div class="filters">
+          <select class="select" id="team-filter" aria-label="Team filter"></select>
+          <div class="segmented" aria-label="Roster section filter">
+            <button class="segment" type="button" data-section-filter="All" aria-pressed="true">All</button>
+            <button class="segment" type="button" data-section-filter="Main" aria-pressed="false">Main</button>
+            <button class="segment" type="button" data-section-filter="IR" aria-pressed="false">IR</button>
+            <button class="segment" type="button" data-section-filter="Taxi" aria-pressed="false">Taxi</button>
+          </div>
+          <select class="select" id="taxi-filter" aria-label="Taxi eligibility filter">
+            <option value="All">All Taxi Statuses</option>
+            <option value="Yes">Eligible Next Year</option>
+            <option value="No">Not Eligible Next Year</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+          <input class="filter-input" id="search-filter" type="search" placeholder="Search player or team" aria-label="Search player or team">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>Section</th>
+              <th>Player</th>
+              <th>Pos</th>
+              <th>NFL</th>
+              <th>Status</th>
+              <th class="numeric">Now Exp</th>
+              <th class="numeric">Next Exp</th>
+              <th>Taxi Next Year</th>
+            </tr>
+          </thead>
+          <tbody id="players-body"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="players-empty" hidden>No players match the current filters.</div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "https://api.sleeper.app/v1";
+    const DEFAULT_LEAGUE_ID = "1314091850864279552";
+    const PLAYER_CACHE_KEY = "sleeper-roster-counts-player-cache-v1";
+    const PLAYER_CACHE_MS = 24 * 60 * 60 * 1000;
+
+    const state = {
+      league: null,
+      rosters: [],
+      users: [],
+      usersById: new Map(),
+      playersById: {},
+      summaryRows: [],
+      playerRows: [],
+      filters: {
+        team: "All",
+        section: "All",
+        taxi: "All",
+        search: ""
+      },
+      cache: {
+        source: "none",
+        savedAt: null
+      }
+    };
+
+    const els = {
+      form: document.getElementById("league-form"),
+      leagueInput: document.getElementById("league-id"),
+      refreshPlayerCache: document.getElementById("refresh-player-cache"),
+      loadButton: document.getElementById("load-button"),
+      exportButton: document.getElementById("export-button"),
+      status: document.getElementById("status"),
+      statusText: document.getElementById("status-text"),
+      leagueBand: document.getElementById("league-band"),
+      leagueTitle: document.getElementById("league-title"),
+      leagueMeta: document.getElementById("league-meta"),
+      loadedAt: document.getElementById("loaded-at"),
+      metrics: document.getElementById("metrics"),
+      summarySection: document.getElementById("summary-section"),
+      summaryBody: document.getElementById("summary-body"),
+      playersSection: document.getElementById("players-section"),
+      playersBody: document.getElementById("players-body"),
+      playersEmpty: document.getElementById("players-empty"),
+      teamFilter: document.getElementById("team-filter"),
+      taxiFilter: document.getElementById("taxi-filter"),
+      searchFilter: document.getElementById("search-filter")
+    };
+
+    els.form.addEventListener("submit", event => {
+      event.preventDefault();
+      loadLeague({
+        forcePlayers: els.refreshPlayerCache.checked
+      });
+    });
+
+    els.exportButton.addEventListener("click", exportCsv);
+
+    els.teamFilter.addEventListener("change", () => {
+      state.filters.team = els.teamFilter.value;
+      renderPlayerTable();
+    });
+
+    els.taxiFilter.addEventListener("change", () => {
+      state.filters.taxi = els.taxiFilter.value;
+      renderPlayerTable();
+    });
+
+    els.searchFilter.addEventListener("input", () => {
+      state.filters.search = els.searchFilter.value.trim().toLowerCase();
+      renderPlayerTable();
+    });
+
+    document.querySelectorAll("[data-section-filter]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.filters.section = button.dataset.sectionFilter;
+        document.querySelectorAll("[data-section-filter]").forEach(item => {
+          item.setAttribute("aria-pressed", String(item === button));
+        });
+        renderPlayerTable();
+      });
+    });
+
+    loadLeague({ forcePlayers: false });
+
+    async function loadLeague({ forcePlayers }) {
+      const leagueId = normalizeLeagueId(els.leagueInput.value);
+      els.leagueInput.value = leagueId;
+
+      if (!leagueId) {
+        setStatus("Enter a Sleeper league ID or league URL.", "error");
+        return;
+      }
+
+      setLoading(true, "Loading league, rosters, and users...");
+      els.exportButton.disabled = true;
+
+      try {
+        const [league, rosters, users] = await Promise.all([
+          fetchJson(`league/${leagueId}`),
+          fetchJson(`league/${leagueId}/rosters`),
+          fetchJson(`league/${leagueId}/users`)
+        ]);
+
+        state.league = league;
+        state.rosters = Array.isArray(rosters) ? rosters : [];
+        state.users = Array.isArray(users) ? users : [];
+        state.usersById = new Map(state.users.map(user => [String(user.user_id), user]));
+
+        const playerIds = collectPlayerIds(state.rosters);
+        setLoading(true, "Loading player metadata...");
+        const playerLoad = await loadPlayerSlice(playerIds, forcePlayers);
+        state.playersById = playerLoad.playersById;
+        state.cache = {
+          source: playerLoad.source,
+          savedAt: playerLoad.savedAt
+        };
+
+        buildRows();
+        resetFilters();
+        renderAll();
+        setStatus(`Loaded ${state.summaryRows.length} rosters and ${state.playerRows.length} players.`, "ok");
+        els.exportButton.disabled = false;
+      } catch (error) {
+        console.error(error);
+        setStatus(error.message || "Something went wrong while loading Sleeper data.", "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function fetchJson(path) {
+      const response = await fetch(`${API_BASE}/${path}`, {
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}: ${path}`);
+      }
+
+      return response.json();
+    }
+
+    function normalizeLeagueId(value) {
+      const match = String(value || "").match(/\d{12,}/);
+      return match ? match[0] : "";
+    }
+
+    function collectPlayerIds(rosters) {
+      const ids = new Set();
+      rosters.forEach(roster => {
+        toArray(roster.players).forEach(id => {
+          if (id && id !== "0") {
+            ids.add(String(id));
+          }
+        });
+      });
+      return Array.from(ids).sort();
+    }
+
+    async function loadPlayerSlice(playerIds, forcePlayers) {
+      const cached = readPlayerCache();
+      const cachedPlayers = cached.playersById || {};
+      const cacheFresh = cached.savedAt && Date.now() - cached.savedAt < PLAYER_CACHE_MS;
+      const missingIds = playerIds.filter(id => !(id in cachedPlayers));
+
+      if (!forcePlayers && cacheFresh && missingIds.length === 0) {
+        return {
+          playersById: pickPlayersById(cachedPlayers, playerIds),
+          source: "cache",
+          savedAt: cached.savedAt
+        };
+      }
+
+      const fullPlayers = await fetchJson("players/nfl");
+      const nextPlayers = { ...cachedPlayers };
+
+      playerIds.forEach(id => {
+        if (fullPlayers[id]) {
+          nextPlayers[id] = reducePlayer(fullPlayers[id]);
+        } else {
+          nextPlayers[id] = null;
+        }
+      });
+
+      const savedAt = Date.now();
+      writePlayerCache(nextPlayers, savedAt);
+
+      return {
+        playersById: pickPlayersById(nextPlayers, playerIds),
+        source: "api",
+        savedAt
+      };
+    }
+
+    function readPlayerCache() {
+      try {
+        const raw = localStorage.getItem(PLAYER_CACHE_KEY);
+        if (!raw) {
+          return { playersById: {}, savedAt: null };
+        }
+        const parsed = JSON.parse(raw);
+        return {
+          playersById: parsed.playersById || {},
+          savedAt: Number(parsed.savedAt) || null
+        };
+      } catch {
+        return { playersById: {}, savedAt: null };
+      }
+    }
+
+    function writePlayerCache(playersById, savedAt) {
+      try {
+        localStorage.setItem(PLAYER_CACHE_KEY, JSON.stringify({ playersById, savedAt }));
+      } catch {
+        state.cache.source = "api";
+      }
+    }
+
+    function pickPlayersById(playersById, ids) {
+      return ids.reduce((result, id) => {
+        result[id] = playersById[id] || null;
+        return result;
+      }, {});
+    }
+
+    function reducePlayer(player) {
+      return {
+        full_name: player.full_name || null,
+        first_name: player.first_name || null,
+        last_name: player.last_name || null,
+        position: player.position || null,
+        team: player.team || null,
+        status: player.status || null,
+        years_exp: player.years_exp,
+        player_id: player.player_id || null,
+        metadata: {
+          rookie_year: player.metadata ? player.metadata.rookie_year || null : null
+        }
+      };
+    }
+
+    function buildRows() {
+      const taxiYears = Number(state.league.settings && state.league.settings.taxi_years) || 0;
+      const taxiSlots = Number(state.league.settings && state.league.settings.taxi_slots) || 0;
+
+      const summaryRows = [];
+      const playerRows = [];
+
+      state.rosters
+        .slice()
+        .sort((a, b) => Number(a.roster_id) - Number(b.roster_id))
+        .forEach(roster => {
+          const user = state.usersById.get(String(roster.owner_id));
+          const teamName = getTeamName(user, roster);
+          const playerIds = toArray(roster.players).filter(id => id && id !== "0").map(String);
+          const reserveIds = new Set(toArray(roster.reserve).filter(Boolean).map(String));
+          const taxiIds = new Set(toArray(roster.taxi).filter(Boolean).map(String));
+
+          const rowsForRoster = playerIds.map(playerId => {
+            const player = state.playersById[playerId];
+            const section = reserveIds.has(playerId) ? "IR" : taxiIds.has(playerId) ? "Taxi" : "Main";
+            const eligibility = getTaxiEligibility(player, taxiYears);
+
+            return {
+              Roster: roster.roster_id,
+              Team: teamName,
+              User: user ? user.display_name : String(roster.owner_id || ""),
+              Avatar: user ? user.avatar : null,
+              Section: section,
+              PlayerId: playerId,
+              Player: getPlayerName(player, playerId),
+              Position: player ? player.position || "" : "",
+              NFLTeam: player ? player.team || "" : "",
+              Status: player ? player.status || "" : "",
+              CurrentYearsExp: eligibility.currentYearsExp,
+              NextYearsExp: eligibility.nextYearsExp,
+              TaxiEligibleInNextSeason: eligibility.nextYearEligible,
+              TaxiReason: eligibility.reason
+            };
+          });
+
+          rowsForRoster.sort((a, b) => {
+            const sectionOrder = { Main: 1, IR: 2, Taxi: 3 };
+            return sectionOrder[a.Section] - sectionOrder[b.Section] || a.Player.localeCompare(b.Player);
+          });
+
+          playerRows.push(...rowsForRoster);
+
+          const mainCount = rowsForRoster.filter(row => row.Section === "Main").length;
+          const irCount = rowsForRoster.filter(row => row.Section === "IR").length;
+          const taxiCount = rowsForRoster.filter(row => row.Section === "Taxi").length;
+          const eligibleNextYear = rowsForRoster.filter(row => row.TaxiEligibleInNextSeason === "Yes").length;
+          const currentTaxiNotEligible = rowsForRoster.filter(row => row.Section === "Taxi" && row.TaxiEligibleInNextSeason === "No").length;
+
+          summaryRows.push({
+            Roster: roster.roster_id,
+            Team: teamName,
+            User: user ? user.display_name : String(roster.owner_id || ""),
+            Avatar: user ? user.avatar : null,
+            Total: playerIds.length,
+            Main: mainCount,
+            IR: irCount,
+            Taxi: taxiCount,
+            TaxiSlots: taxiSlots,
+            TaxiOpen: Math.max(0, taxiSlots - taxiCount),
+            TaxiEligibleNextYear: eligibleNextYear,
+            CurrentTaxiNotEligible: currentTaxiNotEligible
+          });
+        });
+
+      state.summaryRows = summaryRows;
+      state.playerRows = playerRows;
+    }
+
+    function getTeamName(user, roster) {
+      if (user && user.metadata && user.metadata.team_name) {
+        return user.metadata.team_name;
+      }
+      if (user && user.display_name) {
+        return user.display_name;
+      }
+      return `Roster ${roster.roster_id}`;
+    }
+
+    function getPlayerName(player, playerId) {
+      if (player && player.full_name) {
+        return player.full_name;
+      }
+      if (player && player.position === "DEF") {
+        return `${playerId} Defense`;
+      }
+      return playerId;
+    }
+
+    function getTaxiEligibility(player, taxiYears) {
+      if (!player) {
+        return {
+          nextYearEligible: "Unknown",
+          currentYearsExp: "",
+          nextYearsExp: "",
+          reason: "Player metadata was not found."
+        };
+      }
+
+      if (player.position === "DEF") {
+        return {
+          nextYearEligible: "No",
+          currentYearsExp: "",
+          nextYearsExp: "",
+          reason: "Team defenses are not taxi candidates."
+        };
+      }
+
+      const currentYearsExp = Number(player.years_exp);
+      if (!Number.isFinite(currentYearsExp)) {
+        return {
+          nextYearEligible: "Unknown",
+          currentYearsExp: "",
+          nextYearsExp: "",
+          reason: "Sleeper did not provide years_exp."
+        };
+      }
+
+      const nextYearsExp = currentYearsExp + 1;
+      const eligible = nextYearsExp <= taxiYears;
+
+      return {
+        nextYearEligible: eligible ? "Yes" : "No",
+        currentYearsExp,
+        nextYearsExp,
+        reason: eligible
+          ? `Projected ${nextYearsExp} years exp is within taxi_years=${taxiYears}.`
+          : `Projected ${nextYearsExp} years exp exceeds taxi_years=${taxiYears}.`
+      };
+    }
+
+    function resetFilters() {
+      state.filters = {
+        team: "All",
+        section: "All",
+        taxi: "All",
+        search: ""
+      };
+      els.searchFilter.value = "";
+      els.taxiFilter.value = "All";
+      document.querySelectorAll("[data-section-filter]").forEach(button => {
+        button.setAttribute("aria-pressed", String(button.dataset.sectionFilter === "All"));
+      });
+    }
+
+    function renderAll() {
+      renderLeagueBand();
+      renderMetrics();
+      renderSummaryTable();
+      renderTeamFilter();
+      renderPlayerTable();
+
+      els.leagueBand.hidden = false;
+      els.metrics.hidden = false;
+      els.summarySection.hidden = false;
+      els.playersSection.hidden = false;
+    }
+
+    function renderLeagueBand() {
+      const league = state.league;
+      const settings = league.settings || {};
+      const nextSeason = Number(league.season) + 1;
+      const cacheText = state.cache.source === "cache" ? "Player cache" : "Fresh player data";
+
+      els.leagueTitle.textContent = league.name || "Sleeper League";
+      els.leagueMeta.innerHTML = [
+        pill(`Season ${league.season} to ${nextSeason}`, "teal"),
+        pill(`${settings.taxi_slots || 0} taxi slots`, "amber"),
+        pill(`taxi_years ${settings.taxi_years || 0}`, "blue"),
+        pill(`taxi_allow_vets ${settings.taxi_allow_vets || 0}`),
+        pill(cacheText)
+      ].join("");
+
+      els.loadedAt.textContent = `Loaded ${formatDate(new Date())}`;
+    }
+
+    function renderMetrics() {
+      const totals = state.summaryRows.reduce((acc, row) => {
+        acc.Total += row.Total;
+        acc.Main += row.Main;
+        acc.IR += row.IR;
+        acc.Taxi += row.Taxi;
+        acc.TaxiOpen += row.TaxiOpen;
+        acc.TaxiEligibleNextYear += row.TaxiEligibleNextYear;
+        return acc;
+      }, {
+        Total: 0,
+        Main: 0,
+        IR: 0,
+        Taxi: 0,
+        TaxiOpen: 0,
+        TaxiEligibleNextYear: 0
+      });
+
+      els.metrics.innerHTML = [
+        metric("Total Players", totals.Total, ""),
+        metric("Main", totals.Main, "main"),
+        metric("IR", totals.IR, "ir"),
+        metric("Taxi", totals.Taxi, "taxi"),
+        metric("Taxi Open", totals.TaxiOpen, ""),
+        metric("Eligible Next Year", totals.TaxiEligibleNextYear, "good")
+      ].join("");
+    }
+
+    function renderSummaryTable() {
+      els.summaryBody.innerHTML = state.summaryRows.map(row => `
+        <tr>
+          <td class="numeric">${escapeHtml(row.Roster)}</td>
+          <td>${teamCell(row)}</td>
+          <td class="numeric">${row.Total}</td>
+          <td class="numeric">${row.Main}</td>
+          <td class="numeric">${row.IR}</td>
+          <td class="numeric">${row.Taxi}</td>
+          <td class="numeric">${row.TaxiOpen}</td>
+          <td class="numeric">${row.TaxiEligibleNextYear}</td>
+          <td class="numeric">${row.CurrentTaxiNotEligible}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderTeamFilter() {
+      const options = [
+        `<option value="All">All Teams</option>`,
+        ...state.summaryRows.map(row => `<option value="${escapeAttr(row.Team)}">${escapeHtml(row.Team)}</option>`)
+      ];
+      els.teamFilter.innerHTML = options.join("");
+      els.teamFilter.value = "All";
+    }
+
+    function renderPlayerTable() {
+      const rows = getFilteredPlayerRows();
+
+      els.playersBody.innerHTML = rows.map(row => `
+        <tr title="${escapeAttr(row.TaxiReason)}">
+          <td>${teamCell(row)}</td>
+          <td><span class="section-tag ${row.Section.toLowerCase()}">${escapeHtml(row.Section)}</span></td>
+          <td>
+            <div class="player-name">${escapeHtml(row.Player)}</div>
+            <div class="muted">${escapeHtml(row.PlayerId)}</div>
+          </td>
+          <td>${escapeHtml(row.Position || "-")}</td>
+          <td>${escapeHtml(row.NFLTeam || "-")}</td>
+          <td>${escapeHtml(row.Status || "-")}</td>
+          <td class="numeric">${formatEmpty(row.CurrentYearsExp)}</td>
+          <td class="numeric">${formatEmpty(row.NextYearsExp)}</td>
+          <td><span class="eligibility-tag ${row.TaxiEligibleInNextSeason.toLowerCase()}">${escapeHtml(row.TaxiEligibleInNextSeason)}</span></td>
+        </tr>
+      `).join("");
+
+      els.playersEmpty.hidden = rows.length > 0;
+    }
+
+    function getFilteredPlayerRows() {
+      return state.playerRows.filter(row => {
+        if (state.filters.team !== "All" && row.Team !== state.filters.team) {
+          return false;
+        }
+        if (state.filters.section !== "All" && row.Section !== state.filters.section) {
+          return false;
+        }
+        if (state.filters.taxi !== "All" && row.TaxiEligibleInNextSeason !== state.filters.taxi) {
+          return false;
+        }
+        if (state.filters.search) {
+          const haystack = `${row.Team} ${row.User} ${row.Player} ${row.Position} ${row.NFLTeam} ${row.PlayerId}`.toLowerCase();
+          if (!haystack.includes(state.filters.search)) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    function exportCsv() {
+      const rows = getFilteredPlayerRows();
+      const columns = [
+        "Roster",
+        "Team",
+        "User",
+        "Section",
+        "PlayerId",
+        "Player",
+        "Position",
+        "NFLTeam",
+        "Status",
+        "CurrentYearsExp",
+        "NextYearsExp",
+        "TaxiEligibleInNextSeason",
+        "TaxiReason"
+      ];
+
+      const csv = [
+        columns.join(","),
+        ...rows.map(row => columns.map(column => csvEscape(row[column])).join(","))
+      ].join("\r\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const link = document.createElement("a");
+      const leagueId = normalizeLeagueId(els.leagueInput.value) || DEFAULT_LEAGUE_ID;
+      link.href = URL.createObjectURL(blob);
+      link.download = `sleeper-roster-counts-${leagueId}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function teamCell(row) {
+      return `
+        <div class="team-cell">
+          ${avatar(row)}
+          <div>
+            <div class="team-name">${escapeHtml(row.Team)}</div>
+            <div class="user-name">${escapeHtml(row.User)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function avatar(row) {
+      const initials = getInitials(row.Team || row.User || "T");
+      if (row.Avatar) {
+        return `<span class="avatar"><img src="https://sleepercdn.com/avatars/thumbs/${escapeAttr(row.Avatar)}" alt=""></span>`;
+      }
+      return `<span class="avatar" aria-hidden="true">${escapeHtml(initials)}</span>`;
+    }
+
+    function getInitials(value) {
+      return String(value)
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0])
+        .join("")
+        .toUpperCase();
+    }
+
+    function pill(text, variant = "") {
+      return `<span class="pill ${variant}">${escapeHtml(text)}</span>`;
+    }
+
+    function metric(label, value, variant) {
+      return `
+        <div class="metric ${variant}">
+          <span>${escapeHtml(label)}</span>
+          <strong>${escapeHtml(value)}</strong>
+        </div>
+      `;
+    }
+
+    function formatEmpty(value) {
+      return value === "" || value === null || typeof value === "undefined" ? "-" : escapeHtml(value);
+    }
+
+    function formatDate(date) {
+      return new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(date);
+    }
+
+    function csvEscape(value) {
+      const text = value === null || typeof value === "undefined" ? "" : String(value);
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+
+    function escapeHtml(value) {
+      return String(value === null || typeof value === "undefined" ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+
+    function toArray(value) {
+      return Array.isArray(value) ? value : [];
+    }
+
+    function setStatus(message, tone) {
+      els.status.classList.toggle("error", tone === "error");
+      els.statusText.textContent = message;
+    }
+
+    function setLoading(isLoading, message) {
+      els.status.classList.toggle("loading", isLoading);
+      els.loadButton.disabled = isLoading;
+      if (message) {
+        setStatus(message);
+      }
+    }
+  </script>
+</body>
+</html>
